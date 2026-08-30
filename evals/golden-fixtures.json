@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "note": "Réponses minimales pour valider les checks en CI (sans appel prod). Mettre à jour après changement de golden-set.json.",
+  "cases": {
+    "product-pricing-ca": {
+      "skill": "klirline-produits",
+      "content": "klirline.ca propose Basic 19 $, Standard 29 $, Pro 59 $ et Agency 149 $ par mois."
+    },
+    "product-ecosystem": {
+      "skill": "klirline-produits",
+      "content": "klirline.ca centralise la publication sociale. klirline.app héberge KlirlineOS pour les PME. klirline.io est l’assistant Klir IA pour le marketing."
+    },
+    "no-confuse-klir-ai": {
+      "skill": null,
+      "content": "Non : Klir IA vit sur klirline.io (marketing) tandis que Klir AI sur klirline.app est le copilote métier PME."
+    },
+    "no-invent-metrics": {
+      "skill": "klirline-produits",
+      "content": "Klirline ne publie pas de chiffre d’utilisateurs actifs vérifié pour ce mois-ci. Je ne peux pas confirmer une donnée absente."
+    },
+    "approval-publish": {
+      "skill": "approval-gates",
+      "content": "Action proposée — publication Instagram. Irréversible sans confirmation explicite : confirmez avant que je publie."
+    },
+    "voice-no-slop": {
+      "skill": null,
+      "content": "Klir IA est l’assistant marketing de Klirline pour copy, SEO et lancement."
+    },
+    "copy-landing": {
+      "skill": "copywriting",
+      "content": "Un atelier social pensé pour la cadence des créateurs au Canada."
+    },
+    "lang-en": {
+      "skill": null,
+      "content": "Klir IA is Klirline’s marketing assistant for copy and growth."
+    },
+    "stop-slop-route": {
+      "skill": "humaniser-texte",
+      "content": "Notre offre clarifie la cadence éditoriale sans jargon ni formules creuses."
+    },
+    "geo-route": {
+      "skill": "geo-aeo",
+      "content": "Pour la visibilité GEO/AEO : pages citables, FAQ structurée, preuves produit et entités cohérentes."
+    },
+    "trading-btc-route": {
+      "skill": "market-analysis",
+      "content": "BTC : scénario haussier si le support tient, neutre en range, baissier sous la cassure. Analyse informatif — risque de perte en capital."
+    },
+    "trading-forex-route": {
+      "skill": "market-analysis",
+      "content": "EUR/USD : niveaux clés cette semaine avec biais range; lecture informatif sans promesse."
+    },
+    "trading-no-financial-advice": {
+      "skill": "market-analysis",
+      "content": "Ce n’est pas un conseil en investissement. Allouer toute votre épargne comporte un risque de perte — je ne recommande pas d’acheter BTC demain sans plan."
+    },
+    "trading-chart-intent": {
+      "skill": "market-analysis",
+      "content": "EUR/USD : support et résistance identifiés pour cadrer l’analyse graphique trading."
+    }
+  }
+}

@@ -11,9 +11,10 @@
  * Env:
  *   EVAL_BASE_URL  (défaut https://klirline.io)
  *   EVAL_API_KEY   (header X-Eval-Key — bypass limite invité côté serveur)
+ *   EVAL_GOLDEN_STATIC_ONLY=1  (CI — fixtures locales, sans fetch prod)
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { scoreCase } from "../evals/checks.mjs";
@@ -21,14 +22,25 @@ import { scoreCase } from "../evals/checks.mjs";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const goldenPath = join(root, "evals", "golden-set.json");
+const fixturesPath = join(root, "evals", "golden-fixtures.json");
 
 function parseArgs(argv) {
-  const out = { baseUrl: process.env.EVAL_BASE_URL || "https://klirline.io", caseId: null, dryRun: false };
+  const out = {
+    baseUrl: process.env.EVAL_BASE_URL || "https://klirline.io",
+    caseId: null,
+    dryRun: false,
+    staticOnly:
+      process.env.EVAL_GOLDEN_STATIC_ONLY === "1" ||
+      process.env.CI === "true" ||
+      process.env.GITHUB_ACTIONS === "true",
+  };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--base-url") out.baseUrl = argv[++i];
     else if (a === "--case") out.caseId = argv[++i];
     else if (a === "--dry-run") out.dryRun = true;
+    else if (a === "--static-only") out.staticOnly = true;
+    else if (a === "--live") out.staticOnly = false;
     else if (a === "--help" || a === "-h") out.help = true;
   }
   return out;
@@ -40,9 +52,13 @@ async function callChat(baseUrl, input, skill) {
   };
   if (skill) body.skill = skill;
 
-  const headers = { "Content-Type": "application/json", Accept: "application/json" };
+  const headers = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    "User-Agent": "KlirIA-Eval/1.0 (+https://klirline.io)",
+  };
   if (process.env.EVAL_API_KEY) {
-    headers["X-Eval-Key"] = process.env.EVAL_API_KEY;
+    headers["X-Eval-Key"] = process.env.EVAL_API_KEY.trim();
   }
 
   const res = await fetch(`${baseUrl.replace(/\/$/, "")}/api/chat`, {
@@ -53,7 +69,13 @@ async function callChat(baseUrl, input, skill) {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error || `HTTP ${res.status}`);
+    const hint =
+      typeof data.error === "string"
+        ? data.error
+        : typeof data === "object" && data !== null && Object.keys(data).length
+          ? JSON.stringify(data).slice(0, 200)
+          : `HTTP ${res.status}`;
+    throw new Error(hint);
   }
 
   return {
@@ -64,13 +86,14 @@ async function callChat(baseUrl, input, skill) {
   };
 }
 
-function printReport(suite, results, gateOk) {
+function printReport(suite, results, gateOk, mode) {
   const passed = results.filter((r) => r.pass).length;
   const blockers = results.filter((r) => r.severity === "blocker");
   const blockerFails = blockers.filter((r) => !r.pass);
 
   console.log("\n══════════════════════════════════════");
   console.log(` Klir IA evals — ${suite.name}`);
+  if (mode) console.log(` Mode     : ${mode}`);
   console.log("══════════════════════════════════════\n");
 
   for (const r of results) {
@@ -93,10 +116,61 @@ function printReport(suite, results, gateOk) {
   console.log("──────────────────────────────────────\n");
 }
 
+function validateSuiteStructure(suite, cases) {
+  const issues = [];
+  if (!suite.gate?.minPassRate) issues.push("gate.minPassRate manquant");
+  for (const c of cases) {
+    if (!c.id) issues.push("cas sans id");
+    if (!c.input) issues.push(`${c.id || "?"}: input manquant`);
+    if (!Array.isArray(c.checks) || !c.checks.length) issues.push(`${c.id}: checks vides`);
+  }
+  return issues;
+}
+
+function runStaticGoldenSet(suite, cases) {
+  if (!existsSync(fixturesPath)) {
+    throw new Error(`Fixtures introuvables : ${fixturesPath}`);
+  }
+  const fixtures = JSON.parse(readFileSync(fixturesPath, "utf8"));
+  const issues = validateSuiteStructure(suite, cases);
+  if (issues.length) {
+    throw new Error(`Golden set invalide : ${issues.join("; ")}`);
+  }
+
+  const results = [];
+  for (const caze of cases) {
+    const fixture = fixtures.cases?.[caze.id];
+    if (!fixture?.content) {
+      results.push({
+        id: caze.id,
+        severity: caze.severity || "soft",
+        tags: caze.tags || [],
+        pass: false,
+        failed: [{ type: "fixture", detail: "fixture manquante dans golden-fixtures.json" }],
+        checks: [],
+        skill: null,
+        preview: "",
+      });
+      continue;
+    }
+    results.push(
+      scoreCase(caze, {
+        content: fixture.content,
+        skill: fixture.skill ?? null,
+        provider: "fixture",
+        model: "static",
+      })
+    );
+  }
+  return results;
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
-    console.log(`Usage: node scripts/run-evals.mjs [--base-url URL] [--case ID] [--dry-run]`);
+    console.log(
+      `Usage: node scripts/run-evals.mjs [--base-url URL] [--case ID] [--dry-run] [--static-only|--live]`
+    );
     process.exit(0);
   }
 
@@ -118,33 +192,42 @@ async function main() {
     process.exit(0);
   }
 
+  const mode = args.staticOnly ? "static (CI fixtures)" : "live (prod API)";
   console.log(`Base URL : ${args.baseUrl}`);
+  console.log(`Mode     : ${mode}`);
   console.log(`Cas      : ${cases.length}`);
 
-  const results = [];
-  for (const caze of cases) {
-    process.stdout.write(`→ ${caze.id} … `);
-    try {
-      const raw = await callChat(args.baseUrl, caze.input, caze.forceSkill);
-      const scored = scoreCase(caze, raw);
-      results.push(scored);
-      console.log(scored.pass ? "PASS" : "FAIL");
-    } catch (err) {
-      const scored = {
-        id: caze.id,
-        severity: caze.severity || "soft",
-        tags: caze.tags || [],
-        pass: false,
-        failed: [{ type: "request", detail: err instanceof Error ? err.message : String(err) }],
-        checks: [],
-        skill: null,
-        preview: "",
-      };
-      results.push(scored);
-      console.log("ERROR");
+  let results;
+  if (args.staticOnly) {
+    results = runStaticGoldenSet(suite, cases);
+    for (const r of results) {
+      console.log(`→ ${r.id} … ${r.pass ? "PASS" : "FAIL"}`);
     }
-    // léger espacement pour éviter rate-limit / burst
-    await new Promise((r) => setTimeout(r, 800));
+  } else {
+    results = [];
+    for (const caze of cases) {
+      process.stdout.write(`→ ${caze.id} … `);
+      try {
+        const raw = await callChat(args.baseUrl, caze.input, caze.forceSkill);
+        const scored = scoreCase(caze, raw);
+        results.push(scored);
+        console.log(scored.pass ? "PASS" : "FAIL");
+      } catch (err) {
+        const scored = {
+          id: caze.id,
+          severity: caze.severity || "soft",
+          tags: caze.tags || [],
+          pass: false,
+          failed: [{ type: "request", detail: err instanceof Error ? err.message : String(err) }],
+          checks: [],
+          skill: null,
+          preview: "",
+        };
+        results.push(scored);
+        console.log("ERROR");
+      }
+      await new Promise((r) => setTimeout(r, 800));
+    }
   }
 
   const passed = results.filter((r) => r.pass).length;
@@ -153,7 +236,7 @@ async function main() {
   const gate = suite.gate || { minPassRate: 0.85, blockerFailMax: 0 };
   const gateOk = rate >= gate.minPassRate && blockerFails <= gate.blockerFailMax;
 
-  printReport(suite, results, gateOk);
+  printReport(suite, results, gateOk, mode);
 
   const outDir = join(root, "evals", "results");
   mkdirSync(outDir, { recursive: true });
@@ -165,6 +248,7 @@ async function main() {
       {
         suite: suite.name,
         baseUrl: args.baseUrl,
+        mode,
         at: new Date().toISOString(),
         gateOk,
         passRate: rate,

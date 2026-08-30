@@ -27,11 +27,32 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run golden set (static fixtures)
+        env:
+          EVAL_GOLDEN_STATIC_ONLY: "1"
+        run: npm run eval
+
+  golden-set-live:
+    name: Golden set (live prod)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Run golden set against production
         env:
           EVAL_BASE_URL: https://klirline.io
           EVAL_API_KEY: ${{ secrets.EVAL_API_KEY }}
-        run: npm run eval
+        run: npm run eval -- --live
 
       - name: Upload eval report
         if: always()

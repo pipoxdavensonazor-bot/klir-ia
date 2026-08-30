@@ -108,19 +108,21 @@ Sans `EVAL_API_KEY`, les requêtes invitées sont bloquées après 3 appels (`GU
 
 ### CI GitHub Actions
 
-Workflow : `.github/workflows/eval.yml` (golden set + trading charts).
+Workflow : `.github/workflows/eval.yml`
 
-1. Dans le repo GitHub → **Settings → Secrets and variables → Actions**, ajouter :
+| Job | Mode | Quand |
+|-----|------|-------|
+| **Golden set** | Statique (`evals/golden-fixtures.json`) | push / PR |
+| **Golden set (live prod)** | API prod + `EVAL_API_KEY` | manuel (`workflow_dispatch`) |
+| **Trading charts** | Statique (source) | push / PR |
 
-   | Secret | Valeur |
-   |--------|--------|
-   | `EVAL_API_KEY` | Même valeur que le secret Worker Cloudflare |
+Secret optionnel pour live manuel : **Settings → Secrets → Actions** → `EVAL_API_KEY`.
 
-2. Push sur `main` ou lancer **Actions → Klir IA Evals → Run workflow**.
+**Local :** `npm run eval` (live) · `npm run eval -- --static-only` (fixtures) · `npm run eval:trading` (live).
 
 Les rapports JSON sont uploadés en artifacts (`evals/results/`).
 
-Le job **Trading charts** utilise le mode statique (`EVAL_TRADING_STATIC_ONLY=1`) — les runners GitHub sont bloqués par Cloudflare sur les fetch live. En local, lancer `npm run eval:trading` sans flag pour inclure les checks prod (`/studio/svg`, `/api/market/analyze`).
+Cloudflare bloque les fetch live depuis les runners GitHub — le CI push utilise les fixtures statiques. Mettre à jour `evals/golden-fixtures.json` si les checks du golden set changent.
 
 ## Auth Clerk + historique D1
 
