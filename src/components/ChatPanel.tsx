@@ -27,6 +27,7 @@ import {
   readGuestSearchCount,
   writeGuestSearchCount,
 } from "@/lib/guest-limit";
+import { lightHumanize } from "@/lib/ai/humanize";
 import { renderMarkdown } from "@/lib/markdown";
 import { useCreditConfig } from "@/hooks/useCreditConfig";
 import { computeChatCreditCost } from "@/lib/billing/credit-pricing";
@@ -613,9 +614,12 @@ export default function ChatPanel({
             if (!activeSkill) onActiveSkillChange?.("approval-gates");
           } else if (event.type === "delta" && event.text) {
             assembled += event.text;
-            setMessages([...next, { role: "assistant", content: assembled }]);
+            setMessages([
+              ...next,
+              { role: "assistant", content: lightHumanize(assembled) },
+            ]);
           } else if (event.type === "done") {
-            const finalText = event.content ?? assembled;
+            const finalText = lightHumanize(event.content ?? assembled);
             assembled = finalText;
             setMessages([...next, { role: "assistant", content: finalText }]);
             if (event.provider) setLastProvider(event.provider);

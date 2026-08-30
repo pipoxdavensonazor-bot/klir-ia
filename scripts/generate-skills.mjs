@@ -942,15 +942,63 @@ function extractTriggers(description) {
   return triggers ? triggers[0].slice(0, 200) : description.slice(0, 150);
 }
 
+function extractSectionExcerpts(body, maxSections = 6, maxChars = 520) {
+  const chunks = body.split(/^## /m).slice(1);
+  const skip = /^before writing|initial assessment|check for product/i;
+
+  return chunks
+    .map((chunk) => {
+      const nl = chunk.indexOf("\n");
+      const title = chunk.slice(0, nl).trim();
+      if (skip.test(title)) return null;
+
+      let content = chunk.slice(nl + 1).trim();
+      content = content.split(/^### /m)[0].trim();
+      content = content
+        .split("\n")
+        .filter((line) => {
+          const t = line.trim();
+          if (!t) return false;
+          if (/^see \[.+\]\(references\//i.test(t)) return false;
+          if (/^---+$/.test(t)) return false;
+          return true;
+        })
+        .slice(0, 10)
+        .join("\n")
+        .slice(0, maxChars)
+        .trim();
+
+      return content ? { title, content } : null;
+    })
+    .filter(Boolean)
+    .slice(0, maxSections);
+}
+
 function condenseSkill(name, sourceContent) {
   const fmMatch = sourceContent.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   if (!fmMatch) return null;
 
   const body = fmMatch[2];
   const title = extractTitle(body);
+  const sections = extractSectionExcerpts(body);
+  const intro = body
+    .replace(/^#\s+.+\n+/m, "")
+    .split(/^## /m)[0]
+    .trim()
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && !/^You are/i.test(line))
+    .join(" ")
+    .slice(0, 280)
+    .trim();
 
-  // Extract key sections (first 3 ## headers)
-  const sections = [...body.matchAll(/^## (.+)$/gm)].slice(0, 4).map((m) => m[1]);
+  const mission =
+    intro ||
+    `Playbook **${title.toLowerCase()}** — appliquer les meilleures pratiques du domaine avec la voix Klirline.`;
+
+  const sectionBlocks = sections.length
+    ? sections.map((s) => `## ${s.title}\n\n${s.content}`).join("\n\n")
+    : `## Principes\n\n- Clarté et spécificité — pas de vague ni de hype\n- Bénéfices concrets pour l'audience cible\n- Voix FR-CA studio-grade`;
 
   const condensedBody = `# ${title} — Klir IA
 
@@ -958,33 +1006,24 @@ ${IDENTITY_BLOCK}
 
 ## Mission
 
-Expert en **${title.toLowerCase()}** pour Klir IA. Appliquer les meilleures pratiques du domaine avec la voix Klirline.
+${mission}
 
 ## Contexte
 
-Lire \`catalog/product-marketing.md\` avant de commencer. Poser des questions seulement pour ce qui manque.
+Lire \`catalog/product-marketing.md\` avant de commencer (Klirline). Poser **une seule** question si une info bloque vraiment le livrable.
 
-## Domaines couverts
+${sectionBlocks}
 
-${sections.map((s) => `- ${s}`).join("\n")}
+## Processus Klir IA
 
-## Processus
-
-1. Comprendre l'objectif et l'audience
-2. Appliquer les principes du domaine (${title.toLowerCase()})
-3. Produire un livrable actionnable, prêt à utiliser
-4. Proposer des variantes ou prochaines étapes si pertinent
-
-## Principes clés
-
-- Clarté et spécificité — pas de vague ni de hype
-- Bénéfices concrets pour l'audience cible
-- Voix FR-CA studio-grade (Klirline si contexte Klirline)
-- Ne pas inventer de chiffres ou témoignages
+1. Clarifier objectif, audience et contraintes
+2. Appliquer les sections ci-dessus au cas concret
+3. Produire un livrable actionnable (FR-CA par défaut)
+4. Proposer variantes ou prochaines étapes si pertinent
 
 ## Format de sortie
 
-Livrable structuré adapté au type de tâche, avec sections titrées et actions concrètes.`;
+Livrable structuré, sections titrées, actions concrètes — sans hype ni chiffres inventés.`;
 
   const frDescription = adaptDescription(name, fmMatch[1].match(/description:\s*([\s\S]*?)(?:\nmetadata:|\n---)/)?.[1]?.trim() || "");
 

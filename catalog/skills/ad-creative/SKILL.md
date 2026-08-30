@@ -16,33 +16,50 @@ Tu opères sous **Klir IA** (klirline.io), assistant marketing Klirline Inc.
 
 ## Mission
 
-Expert en **ad creative** pour Klir IA. Appliquer les meilleures pratiques du domaine avec la voix Klirline.
+Playbook **ad creative** — appliquer les meilleures pratiques du domaine avec la voix Klirline.
 
 ## Contexte
 
-Lire `catalog/product-marketing.md` avant de commencer. Poser des questions seulement pour ce qui manque.
+Lire `catalog/product-marketing.md` avant de commencer (Klirline). Poser **une seule** question si une info bloque vraiment le livrable.
 
-## Domaines couverts
+## Before Starting
 
-- Before Starting
-- How This Skill Works
-- Grounded Inputs
-- Platform Specs
+**Check for product marketing context first:**
+If `.agents/product-marketing.md` exists (or `.claude/product-marketing.md`, or the legacy `product-marketing-context.md` filename, in older setups), read it before asking questions. Use that context and only ask for information not already covered or specific to this task.
+Gather this context (ask if not provided):
 
-## Processus
+## How This Skill Works
 
-1. Comprendre l'objectif et l'audience
-2. Appliquer les principes du domaine (ad creative)
-3. Produire un livrable actionnable, prêt à utiliser
-4. Proposer des variantes ou prochaines étapes si pertinent
+This skill supports four modes:
 
-## Principes clés
+## Grounded Inputs
 
-- Clarté et spécificité — pas de vague ni de hype
-- Bénéfices concrets pour l'audience cible
-- Voix FR-CA studio-grade (Klirline si contexte Klirline)
-- Ne pas inventer de chiffres ou témoignages
+Most AI ad generation fails on input grounding, not output quality: ungrounded generation produces plausible-sounding ads based on training data, not on what converts for this brand. For scaled production (Mode 3), maintain a durable inputs corpus:
+```
+inputs/
+  winning-ads/   10-20 screenshots of the highest-performing ads from the last 90 days
+  reviews/       50-100 customer reviews (Trustpilot, G2, Amazon, App Store) as .md/.txt
+  comments/      Top comments from existing ad campaigns — objections, unprompted p
+
+## Platform Specs
+
+Platforms reject or truncate creative that exceeds these limits, so verify every piece of copy fits before delivering.
+
+## Generating Ad Visuals
+
+**To decide *which format to make next*** (before briefing any specific ad), consult the Meta creative format taxonomy in [references/meta-creative-formats.md](references/meta-creative-formats.md) — a prioritized S→F catalog of ~51 formats ranked by one question: is it a *unicorn scaler* that punctures cold net-new audiences, or a *supporting cast* member that only converts mid-funnel? Leads with the persona-based Andromeda context (why creator-fronted formats top the list), S-tier callouts (founder content, partne
+
+## Iterating from Performance Data
+
+When the user provides performance data, follow this process:
+
+## Processus Klir IA
+
+1. Clarifier objectif, audience et contraintes
+2. Appliquer les sections ci-dessus au cas concret
+3. Produire un livrable actionnable (FR-CA par défaut)
+4. Proposer variantes ou prochaines étapes si pertinent
 
 ## Format de sortie
 
-Livrable structuré adapté au type de tâche, avec sections titrées et actions concrètes.
+Livrable structuré, sections titrées, actions concrètes — sans hype ni chiffres inventés.
