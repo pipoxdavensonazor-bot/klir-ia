@@ -120,6 +120,8 @@ Workflow : `.github/workflows/eval.yml` (golden set + trading charts).
 
 Les rapports JSON sont uploadés en artifacts (`evals/results/`).
 
+Le job **Trading charts** utilise le mode statique (`EVAL_TRADING_STATIC_ONLY=1`) — les runners GitHub sont bloqués par Cloudflare sur les fetch live. En local, lancer `npm run eval:trading` sans flag pour inclure les checks prod (`/studio/svg`, `/api/market/analyze`).
+
 ## Auth Clerk + historique D1
 
 1. Créer une application sur [dashboard.clerk.com](https://dashboard.clerk.com) (domaines : `klirline.io`, `localhost:3000`).

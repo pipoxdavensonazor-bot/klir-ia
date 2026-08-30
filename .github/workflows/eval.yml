@@ -56,9 +56,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run trading chart evals
+      - name: Run trading chart evals (static)
         env:
-          EVAL_BASE_URL: https://klirline.io
+          EVAL_TRADING_STATIC_ONLY: "1"
         run: npm run eval:trading
 
       - name: Upload trading report

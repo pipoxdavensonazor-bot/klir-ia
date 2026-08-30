@@ -5,6 +5,7 @@
  * Usage:
  *   node scripts/eval-trading-charts.mjs
  *   node scripts/eval-trading-charts.mjs --base-url https://klirline.io
+ *   node scripts/eval-trading-charts.mjs --static-only   # CI (sans fetch prod)
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
@@ -15,10 +16,19 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 
 function parseArgs(argv) {
-  const out = { baseUrl: process.env.EVAL_BASE_URL || "https://klirline.io" };
+  const out = {
+    baseUrl: process.env.EVAL_BASE_URL || "https://klirline.io",
+    staticOnly:
+      process.env.EVAL_TRADING_STATIC_ONLY === "1" ||
+      process.env.CI === "true" ||
+      process.env.GITHUB_ACTIONS === "true",
+  };
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === "--base-url") out.baseUrl = argv[++i];
-    else if (argv[i] === "--help" || argv[i] === "-h") out.help = true;
+    const a = argv[i];
+    if (a === "--base-url") out.baseUrl = argv[++i];
+    else if (a === "--static-only") out.staticOnly = true;
+    else if (a === "--live") out.staticOnly = false;
+    else if (a === "--help" || a === "-h") out.help = true;
   }
   return out;
 }
@@ -58,6 +68,33 @@ function evalCsp() {
   ];
 }
 
+function evalStaticStudioUi() {
+  const src = readFileSync(join(root, "src/components/SvgVisualStudio.tsx"), "utf8");
+  return [
+    check("static-wireframe-code", /\bCode\b/.test(src), "panneau Code"),
+    check("static-wireframe-preview", /Live preview/i.test(src), "panneau Live preview"),
+    check("static-status-valid", /SVG Valid|SVG invalide/i.test(src), "barre statut SVG"),
+    check("static-zoom-control", /Zoom/i.test(src), "contrôle Zoom"),
+    check("static-background-control", /Background/i.test(src), "contrôle Background"),
+    check("static-export-png", /Export PNG/i.test(src), "export PNG"),
+    check("static-export-jpeg", /Export JPEG/i.test(src), "export JPEG"),
+    check(
+      "static-tradingview-mention",
+      /TradingView|trading/i.test(src),
+      "mention trading/TradingView"
+    ),
+  ];
+}
+
+function evalStaticMarketApi() {
+  const route = readFileSync(join(root, "src/app/api/market/analyze/route.ts"), "utf8");
+  return [
+    check("static-market-route", route.includes("export async function GET"), "route GET metadata"),
+    check("static-market-examples", route.includes('"BTC"'), "exemples BTC"),
+    check("static-market-disclaimer", route.includes("disclaimer"), "disclaimer présent"),
+  ];
+}
+
 async function evalLivePage(baseUrl) {
   const url = `${baseUrl.replace(/\/$/, "")}/studio/svg`;
   try {
@@ -94,10 +131,11 @@ async function evalMarketApi(baseUrl) {
   }
 }
 
-function printReport(results) {
+function printReport(results, mode) {
   const passed = results.filter((r) => r.pass).length;
   console.log("\n══════════════════════════════════════");
   console.log(" Klir IA — Éval graphiques trading");
+  console.log(` Mode     : ${mode}`);
   console.log("══════════════════════════════════════\n");
 
   for (const r of results) {
@@ -116,21 +154,24 @@ function printReport(results) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
-    console.log("Usage: node scripts/eval-trading-charts.mjs [--base-url URL]");
+    console.log("Usage: node scripts/eval-trading-charts.mjs [--base-url URL] [--static-only|--live]");
     process.exit(0);
   }
 
+  const mode = args.staticOnly ? "static (CI)" : "full (live prod)";
   console.log(`Base URL : ${args.baseUrl}`);
+  console.log(`Mode     : ${mode}`);
 
   const results = [
     ...evalSvgTemplate(),
     ...evalTradingViewMapping(),
     ...evalCsp(),
-    ...(await evalLivePage(args.baseUrl)),
-    ...(await evalMarketApi(args.baseUrl)),
+    ...(args.staticOnly
+      ? [...evalStaticStudioUi(), ...evalStaticMarketApi()]
+      : [...(await evalLivePage(args.baseUrl)), ...(await evalMarketApi(args.baseUrl))]),
   ];
 
-  const gateOk = printReport(results);
+  const gateOk = printReport(results, mode);
 
   const outDir = join(root, "evals", "results");
   mkdirSync(outDir, { recursive: true });
@@ -138,7 +179,7 @@ async function main() {
   const outFile = join(outDir, `trading-charts-${stamp}.json`);
   writeFileSync(
     outFile,
-    JSON.stringify({ baseUrl: args.baseUrl, at: new Date().toISOString(), gateOk, results }, null, 2)
+    JSON.stringify({ baseUrl: args.baseUrl, mode, at: new Date().toISOString(), gateOk, results }, null, 2)
   );
   console.log(`Rapport : ${outFile}`);
 
