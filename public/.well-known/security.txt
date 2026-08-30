@@ -1,0 +1,6 @@
+Contact: mailto:contact@klirline.ca
+Contact: https://klirline.io
+Preferred-Languages: fr, en
+Canonical: https://klirline.io/.well-known/security.txt
+Policy: https://klirline.io/developers
+Expires: 2027-08-27T23:59:59.000Z

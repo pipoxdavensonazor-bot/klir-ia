@@ -1,0 +1,59 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "klir-ia",
+  "compatibility_date": "2026-07-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "klir-ia-db",
+      "database_id": "f5aee29d-492e-4549-a498-998c4ad526e9",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "ATTACHMENTS",
+      "bucket_name": "klirai"
+    }
+  ],
+  "routes": [
+    { "pattern": "www.klirline.io", "custom_domain": true },
+    { "pattern": "klirline.io", "custom_domain": true },
+    { "pattern": "*.sites.klirline.io/*", "zone_name": "klirline.io" }
+  ],
+  "vars": {
+    "NEXT_PUBLIC_APP_URL": "https://klirline.io",
+    "OPENAI_MODEL": "gpt-4o-mini",
+    "ANTHROPIC_MODEL": "claude-haiku-4-5",
+    "GEMINI_MODEL": "gemini-3.6-flash",
+    "OPENROUTER_MODEL": "google/gemini-3.5-flash",
+    "OPENROUTER_FREE_MODEL": "google/gemma-4-26b-a4b-it:free",
+    "GROQ_MODEL": "openai/gpt-oss-120b",
+    "MISTRAL_MODEL": "mistral-small-latest",
+    "AI_PROVIDER_ORDER": "gemini,groq,openrouter,openai,anthropic,mistral",
+    "AI_TEMPERATURE": "0.8",
+    "AI_MAX_TOKENS": "1800",
+    "AI_SITE_MAX_TOKENS": "8192",
+    "AI_SANDBOX": "false",
+    "MONCASH_SANDBOX": "true",
+    "FREE_CREDITS": "45",
+    "CREDITS_PER_ACTION": "6",
+    "CREDIT_TEXT_BASE": "6",
+    "CREDITS_PHOTO_SEARCH": "5",
+    "CREDITS_PDF": "7",
+    "CREDITS_IMAGE_GEN": "5",
+    "FREE_CREDITS_REFILL_HOURS": "5",
+    "KLIR_ADMIN_EMAILS": "contact@klirline.ca"
+  }
+}

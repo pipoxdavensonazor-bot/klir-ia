@@ -1,0 +1,19 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" role="img" aria-label="Klir IA">
+  <defs>
+    <linearGradient id="klirGrad" x1="64" y1="256" x2="448" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6ADCF0"/>
+      <stop offset="40%" stop-color="#2B8FC4"/>
+      <stop offset="100%" stop-color="#0A3580"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="#FFFFFF"/>
+  <!-- Glyph centered and scaled to ~58% of canvas -->
+  <g fill="url(#klirGrad)" transform="translate(56 120) scale(1.56)">
+    <rect x="0" y="58" width="22" height="28" rx="11"/>
+    <rect x="30" y="48" width="38" height="48" rx="24"/>
+    <rect x="76" y="36" width="52" height="72" rx="36"/>
+    <path d="M128 36h36v72h-36z"/>
+    <path d="M164 108l62-48h34l-68 52 72 66h-34l-66-70z"/>
+    <path d="M128 108h36v72h-36z"/>
+  </g>
+</svg>
