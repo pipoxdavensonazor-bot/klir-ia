@@ -44,8 +44,15 @@
       "type": "telegram",
       "bot": "@klir_ia_bot",
       "url": "https://t.me/klir_ia_bot",
+      "credentialId": "zVIItMu9XXEtOejL",
       "accessMode": "private",
       "allowedUsers": ["@klirlineofficial"]
+    },
+    {
+      "type": "slack",
+      "name": "Klirline CORE - Klir IA",
+      "credentialId": "SnEK02d1JNVXWfT4",
+      "messagingExperience": "agent"
     }
   ]
 }

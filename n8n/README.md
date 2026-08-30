@@ -15,7 +15,7 @@
 | **Mémoire** | Episodic (n8n) |
 | **Web search** | Activé |
 | **Tâche planifiée** | Briefing marketing hebdo — lundi 9h `America/Montreal` |
-| **Intégrations** | Aucune (Slack/Telegram à connecter) |
+| **Intégrations** | Telegram `@klir_ia_bot` (privé) · Slack `Klirline CORE - Klir IA` |
 
 ## Prompt système
 
@@ -69,8 +69,67 @@ L’agent est déjà publié — la connexion Telegram devient active immédiate
 
 ## Connecter Slack
 
-- **`gpt-5.6-luna` + tools** : incompatible avec `fetch_klir_skill` (erreur reasoning_effort). Utiliser `gpt-5-mini` ou `gpt-5-nano`.  
-- **`gpt-4o-mini`** : non autorisé avec les crédits n8n gratuits.  
+Klir IA répond aux **@mentions**, **DM** et fils Slack une fois le bot connecté à l’agent n8n.
+
+### 1. Créer l’app Slack
+
+1. Ouvrir [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From scratch**
+2. **App Name** : `Klir IA` (ou similaire)
+3. **Workspace** : votre workspace Klirline
+
+### 2. Scopes bot (OAuth & Permissions)
+
+Dans **OAuth & Permissions** → **Bot Token Scopes**, ajouter au minimum :
+
+| Scope | Pourquoi |
+|-------|----------|
+| `app_mentions:read` | Réagir quand on @mentionne le bot |
+| `chat:write` | Envoyer des messages |
+| `im:history`, `im:read`, `im:write` | DM avec le bot |
+| `channels:history`, `channels:read` | Lire le contexte d’un canal public |
+| `groups:history`, `groups:read` | Canaux privés (optionnel) |
+| `users:read` | Résoudre les utilisateurs |
+
+Puis **Install to Workspace** → autoriser.
+
+Copier le **Bot User OAuth Token** (`xoxb-...`) — ne le partagez pas publiquement.
+
+### 3. Credential n8n
+
+1. [n8n Credentials](https://klirline.app.n8n.cloud/home/credentials) → **Add credential**
+2. Type : **Slack API**
+3. Coller le **Access Token** (`xoxb-...`) → **Save**
+4. Noter le nom du credential (ex. `Slack Klir IA`)
+
+### 4. Connecter l’agent
+
+Dans l’[éditeur agent](https://klirline.app.n8n.cloud/projects/LiHOvWVYD0jZZWNG/agents/SrOtsGvMD3XOIgha) → **Integrations** → **Slack** → sélectionner le credential.
+
+L’agent est déjà publié — Slack devient actif immédiatement après connexion.
+
+### 5. Inviter le bot
+
+Dans un canal Slack :
+
+```
+/invite @Klir IA
+```
+
+(Remplacez par le nom affiché de votre app.)
+
+### 6. Tester
+
+- **DM** : ouvrir une conversation directe avec `@Klir IA` → *« Écris 3 hooks LinkedIn pour Klirline »*
+- **Canal** : `@Klir IA quel skill pour une landing page B2B ?`
+
+Réponse attendue : routage vers un skill (ex. `copywriting`, `cro`) + livrable en FR-CA.
+
+---
+
+## Notes modèle / publish
+
+- **`gpt-5.6-luna` + tools** : incompatible avec `fetch_klir_skill` (erreur `reasoning_effort`). Utiliser `gpt-5-mini`.
+- **`gpt-4o-mini`** : non autorisé avec les crédits n8n gratuits.
 - Après modification du brouillon : `validate_agent` → `publish_agent`.
 
 ## Test rapide (Preview)
