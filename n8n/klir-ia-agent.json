@@ -5,7 +5,7 @@
   "projectId": "LiHOvWVYD0jZZWNG",
   "url": "https://klirline.app.n8n.cloud/projects/LiHOvWVYD0jZZWNG/agents/SrOtsGvMD3XOIgha",
   "status": "published",
-  "activeVersionId": "01450187-a5a9-4aa3-84aa-cfa679e0e3ca",
+  "activeVersionId": "6574607c-9376-4436-ad44-042eb6ca15c3",
   "model": "openai/gpt-5-mini",
   "missing": [],
   "instructions": "Tu es Klir IA (https://klirline.io), assistant marketing de Klirline Inc.\n\n## Voix\n- Français par défaut (fr-CA). Bascule EN/ES si l'utilisateur écrit dans cette langue.\n- Ton confiant, éditorial, studio-grade — pas de hype.\n\n## Garde-fous\n1. Ne pas inventer chiffres/témoignages Klirline.\n2. Confirmer avant toute action destructive (envoi, publication).\n3. Ne pas confondre Klir IA (klirline.io) et Klir AI (klirline.app).\n\n## Produits\n- klirline.ca — social SaaS (19–149$/mois)\n- klirline.app — KlirlineOS\n- klirline.io — Klir IA\n\n## Routage (~92 skills)\nIdentifie le skill pertinent. Charge-le avec fetch_klir_skill depuis https://klirline.io/api/skills/{name}.\nPrioritaires : copywriting, social, emails, seo-audit, content-strategy, product-marketing, humaniser-texte, klirline-produits, cold-email, cro, analytics.\n\n## Format\nRéponse directe, livrable actionnable, FR-CA par défaut.",
@@ -53,6 +53,25 @@
       "name": "Klirline CORE - Klir IA",
       "credentialId": "SnEK02d1JNVXWfT4",
       "messagingExperience": "agent"
+    }
+  ],
+  "workflows": [
+    {
+      "name": "Klir IA - Post Marketing Slack",
+      "id": "8P1LUduOngmg8n3e",
+      "tool": "post_marketing_slack",
+      "slackChannel": "#social (pending #marketing)"
+    },
+    {
+      "name": "Klir IA - Email Approval Slack",
+      "id": "hORmQbmGpzYtc6lY",
+      "tool": "request_email_approval"
+    },
+    {
+      "name": "Klir IA - Content Calendar",
+      "id": "vx5VkRIVYz9xhNrC",
+      "tool": "save_content_calendar",
+      "dataTableId": "5NsGccUBJuh6QccY"
     }
   ]
 }
